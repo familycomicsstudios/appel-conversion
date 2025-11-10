@@ -17,6 +17,16 @@ const scheepTable = [
   [11, 9], [12, 10], [13, 11], [14, 12], [14.5, 13], [15, 15]
 ];
 
+// Punter visual mapping
+const punterVisuals = [
+  [1, "Easy"], [2, "Medium"], [3, "Hard"], [4, "Harder"], [5, "Insane"],
+  [6, "Expert"], [7, "Extreme"], [8, "Madness"], [9, "Master"], [10, "Grandmaster"],
+  [11, "Grandmaster+"], [12, "Grandmaster++"], [13, "TAS"], [14, "TAS+"],
+  [15, "TAS++"]
+  // For 16+ we add logic dynamically
+];
+
+// Scheep visual mapping
 const scheepVisuals = [
   [0, "Baby"], [1, "Easy"], [2, "Medium"], [3, "Hard"], [3.5, "Harder"],
   [4, "Difficult"], [5, "Intense"], [6, "Remorseless"], [7, "Insane"], 
@@ -24,86 +34,122 @@ const scheepVisuals = [
   [11, "???????"], [12, "Impossible"], [13, "Ascended"], [14, "TAS"], [15, "Cwktao's Wrath"]
 ];
 
-// Generic functions
-function toPunter(value, table) {
-  for (let i = 0; i < table.length - 1; i++) {
-    const [x0, y0] = table[i];
-    const [x1, y1] = table[i + 1];
-    if (value >= x0 && value <= x1) return linearInterpolation(x0, y0, x1, y1, value);
-  }
-  return value < table[0][0] ? table[0][1] : table[table.length - 1][1];
-}
-
-function fromPunter(value, table) {
-  for (let i = 0; i < table.length - 1; i++) {
-    const [x0, y0] = table[i];
-    const [x1, y1] = table[i + 1];
-    if (value >= y0 && value <= y1) return linearInterpolation(y0, x0, y1, x1, value);
-  }
-  return value < table[0][1] ? table[0][0] : table[table.length - 1][0];
-}
-
-// Format number to only needed decimals
+// Helper: format number nicely
 function formatNumber(num) {
   return parseFloat(num.toFixed(10)).toString();
 }
 
-// Convert value to visual representation
+// Linear interpolation to/from punter
+function toPunter(value, table) {
+  for (let i = 0; i < table.length-1; i++) {
+    const [x0, y0] = table[i];
+    const [x1, y1] = table[i+1];
+    if (value >= x0 && value <= x1) return linearInterpolation(x0, y0, x1, y1, value);
+  }
+  return value < table[0][0] ? table[0][1] : table[table.length-1][1];
+}
+
+function fromPunter(value, table) {
+  for (let i = 0; i < table.length-1; i++) {
+    const [x0, y0] = table[i];
+    const [x1, y1] = table[i+1];
+    if (value >= y0 && value <= y1) return linearInterpolation(y0, x0, y1, x1, value);
+  }
+  return value < table[0][1] ? table[0][0] : table[table.length-1][0];
+}
+
+// Convert numeric value to visual for a system
 function toVisual(value, system) {
   switch(system) {
+    case 'punter':
+      if (value >= 16) return `TAS++${Math.floor(value-15) > 0 ? `+${Math.floor(value-15)}` : ''}`;
+      for (let i = punterVisuals.length-1; i >=0; i--) {
+        if (value >= punterVisuals[i][0]) return punterVisuals[i][1];
+      }
+      return formatNumber(value);
     case 'michaelchan':
       if (value < 1) return `${formatNumber(value/10)}⚡`;
       if (value < 10) return `${formatNumber(value)}💥`;
       if (value < 100) return `${formatNumber(value/10)}💣`;
       return `${formatNumber(value/100)}🧨`;
     case 'scheep':
-      for (let i = scheepVisuals.length - 1; i >= 0; i--) {
+      for (let i = scheepVisuals.length-1; i >= 0; i--) {
         if (value >= scheepVisuals[i][0]) return scheepVisuals[i][1];
       }
-      return scheepVisuals[0][1];
+      return formatNumber(value);
     default:
       return formatNumber(value);
   }
 }
 
-// Main conversion
-function convert(value, fromSystem, toSystem) {
-  if (fromSystem === toSystem) return value;
+// Parse visual input to numeric for a system
+function visualToNumber(text, system) {
+  text = text.trim();
+  switch(system) {
+    case 'punter':
+      // Check + pattern for 16+
+      if (/TAS\+\+/.test(text)) {
+        const extra = parseInt(text.split('+')[2]||0);
+        return 15 + extra;
+      }
+      for (let [val,name] of punterVisuals) if (name.toLowerCase() === text.toLowerCase()) return val;
+      return parseFloat(text);
+    case 'michaelchan':
+      if (text.endsWith('⚡')) return parseFloat(text.replace('⚡',''))*10;
+      if (text.endsWith('💥')) return parseFloat(text.replace('💥',''));
+      if (text.endsWith('💣')) return parseFloat(text.replace('💣',''))*10;
+      if (text.endsWith('🧨')) return parseFloat(text.replace('🧨',''))*100;
+      return parseFloat(text);
+    case 'scheep':
+      for (let [val,name] of scheepVisuals) if (name.toLowerCase() === text.toLowerCase()) return val;
+      return parseFloat(text);
+    default:
+      return parseFloat(text);
+  }
+}
 
+// Convert from any system to any other system
+function convert(value, fromSystem, toSystem) {
+  let numericValue;
+  if (typeof value === 'string') numericValue = visualToNumber(value, fromSystem);
+  else numericValue = value;
+
+  if (fromSystem === toSystem) return numericValue;
+
+  // Convert to Punter first
   let punterValue;
-  switch (fromSystem) {
-    case 'punter': punterValue = value; break;
-    case 'michaelchan': punterValue = toPunter(value, michaelChanTable); break;
-    case 'scheep': punterValue = toPunter(value, scheepTable); break;
+  switch(fromSystem) {
+    case 'punter': punterValue = numericValue; break;
+    case 'michaelchan': punterValue = toPunter(numericValue, michaelChanTable); break;
+    case 'scheep': punterValue = toPunter(numericValue, scheepTable); break;
   }
 
-  switch (toSystem) {
+  // Convert from Punter to target
+  switch(toSystem) {
     case 'punter': return punterValue;
     case 'michaelchan': return fromPunter(punterValue, michaelChanTable);
     case 'scheep': return fromPunter(punterValue, scheepTable);
   }
 }
 
-// Real-time conversion
+// Update display in real-time
 function updateConversion() {
-  const value = parseFloat(document.getElementById('valueInput').value);
+  const input = document.getElementById('valueInput').value;
   const fromSystem = document.getElementById('sourceSystem').value;
   const toSystem = document.getElementById('targetSystem').value;
 
-  if (isNaN(value)) {
-    document.getElementById('result').textContent = "-";
-    document.getElementById('visualResult').textContent = "-";
+  if (!input) {
+    document.getElementById('result').textContent = '-';
+    document.getElementById('visualResult').textContent = '-';
     return;
   }
 
-  const result = convert(value, fromSystem, toSystem);
-  const visual = toVisual(result, toSystem);
-
-  document.getElementById('result').textContent = formatNumber(result);
-  document.getElementById('visualResult').textContent = visual;
+  const numericResult = convert(input, fromSystem, toSystem);
+  document.getElementById('result').textContent = formatNumber(numericResult);
+  document.getElementById('visualResult').textContent = toVisual(numericResult, toSystem);
 }
 
-// Event listeners for live update
+// Event listeners
 document.getElementById('valueInput').addEventListener('input', updateConversion);
 document.getElementById('sourceSystem').addEventListener('change', updateConversion);
 document.getElementById('targetSystem').addEventListener('change', updateConversion);

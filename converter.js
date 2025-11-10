@@ -95,11 +95,24 @@ function visualToNumber(text, system) {
       for (let [val,name] of punterVisuals) if (name.toLowerCase() === text.toLowerCase()) return val;
       return parseFloat(text);
     case 'michaelchan':
-      if (text.endsWith('⚡')) return parseFloat(text.replace('⚡',''))*10;
-      if (text.endsWith('💥')) return parseFloat(text.replace('💥',''));
-      if (text.endsWith('💣')) return parseFloat(text.replace('💣',''))*10;
-      if (text.endsWith('🧨')) return parseFloat(text.replace('🧨',''))*100;
-      return parseFloat(text);
+        // Count emojis if no number is present
+        if (/^[⚡💥💣🧨]+$/.test(text)) {
+            let total = 0;
+            for (let char of text) {
+            if (char === '⚡') total += 0.1*10; // ⚡ = 0.1 -> multiply by 10? keep as 1
+            if (char === '💥') total += 1;
+            if (char === '💣') total += 10;
+            if (char === '🧨') total += 100;
+            }
+            return total;
+        }
+
+        if (text.endsWith('⚡')) return parseFloat(text.replace('⚡',''))*10;
+        if (text.endsWith('💥')) return parseFloat(text.replace('💥',''));
+        if (text.endsWith('💣')) return parseFloat(text.replace('💣',''))*10;
+        if (text.endsWith('🧨')) return parseFloat(text.replace('🧨',''))*100;
+  return parseFloat(text);
+
     case 'scheep':
       for (let [val,name] of scheepVisuals) if (name.toLowerCase() === text.toLowerCase()) return val;
       return parseFloat(text);

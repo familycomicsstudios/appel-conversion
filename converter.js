@@ -17,6 +17,13 @@ const scheepTable = [
   [11, 9], [12, 10], [13, 11], [14, 12], [14.5, 13], [15, 15]
 ];
 
+const scheepVisuals = [
+  [0, "Baby"], [1, "Easy"], [2, "Medium"], [3, "Hard"], [3.5, "Harder"],
+  [4, "Difficult"], [5, "Intense"], [6, "Remorseless"], [7, "Insane"], 
+  [7.5, "Insane EX"], [8, "Madness"], [9, "Extreme"], [10, "Xtreme"], 
+  [11, "???????"], [12, "Impossible"], [13, "Ascended"], [14, "TAS"], [15, "Cwktao's Wrath"]
+];
+
 // Generic functions
 function toPunter(value, table) {
   for (let i = 0; i < table.length - 1; i++) {
@@ -34,6 +41,29 @@ function fromPunter(value, table) {
     if (value >= y0 && value <= y1) return linearInterpolation(y0, x0, y1, x1, value);
   }
   return value < table[0][1] ? table[0][0] : table[table.length - 1][0];
+}
+
+// Format number to only needed decimals
+function formatNumber(num) {
+  return parseFloat(num.toFixed(10)).toString();
+}
+
+// Convert value to visual representation
+function toVisual(value, system) {
+  switch(system) {
+    case 'michaelchan':
+      if (value < 1) return `${formatNumber(value/10)}⚡`;
+      if (value < 10) return `${formatNumber(value)}💥`;
+      if (value < 100) return `${formatNumber(value/10)}💣`;
+      return `${formatNumber(value/100)}🧨`;
+    case 'scheep':
+      for (let i = scheepVisuals.length - 1; i >= 0; i--) {
+        if (value >= scheepVisuals[i][0]) return scheepVisuals[i][1];
+      }
+      return scheepVisuals[0][1];
+    default:
+      return formatNumber(value);
+  }
 }
 
 // Main conversion
@@ -54,17 +84,26 @@ function convert(value, fromSystem, toSystem) {
   }
 }
 
-// Event listener
-document.getElementById('convertBtn').addEventListener('click', () => {
+// Real-time conversion
+function updateConversion() {
   const value = parseFloat(document.getElementById('valueInput').value);
   const fromSystem = document.getElementById('sourceSystem').value;
   const toSystem = document.getElementById('targetSystem').value;
 
   if (isNaN(value)) {
-    alert("Please enter a valid number.");
+    document.getElementById('result').textContent = "-";
+    document.getElementById('visualResult').textContent = "-";
     return;
   }
 
   const result = convert(value, fromSystem, toSystem);
-  document.getElementById('result').textContent = result.toFixed(2);
-});
+  const visual = toVisual(result, toSystem);
+
+  document.getElementById('result').textContent = formatNumber(result);
+  document.getElementById('visualResult').textContent = visual;
+}
+
+// Event listeners for live update
+document.getElementById('valueInput').addEventListener('input', updateConversion);
+document.getElementById('sourceSystem').addEventListener('change', updateConversion);
+document.getElementById('targetSystem').addEventListener('change', updateConversion);

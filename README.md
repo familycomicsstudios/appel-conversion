@@ -1,5 +1,25 @@
 # System Conversion Methods
 
+## Punter Scale
+### Visual Representation
+Always have .00 decimal precision (or more). Also, names:
+1: Easy
+2: Medium
+3: Hard
+4: Harder
+5: Insane
+6: Expert
+7: Extreme
+8: Madness
+9: Master
+10: Grandmaster
+11: Grandmaster+
+12: Grandmaster++
+13: TAS
+14: TAS+
+15: TAS++
+16+: 1 more + per +1 increase
+
 ## MichaelChan system
 ### To Punter
 Use this table:
@@ -28,6 +48,7 @@ If less than 1, divide value by 10 and add ⚡ emoji.
 If 1-9.99, add 💥 emoji.
 If 10-99, add 💣 and divide by 10.
 If 100+, add 🧨 and divide by 100.
+All emojis are added to the end. Round to only as many deccimals as needed (1.10 -> 1.1, 2.00 -> 2)
 
 ## Scheep Extended (Numerical)
 ### To Punter

@@ -68,7 +68,7 @@ function toVisual(value, system) {
       }
       return formatNumber(value);
     case 'michaelchan':
-      if (value < 1) return `${formatNumber(value/10)}⚡`;
+      if (value < 1) return `${formatNumber(value*10)}⚡`;
       if (value < 10) return `${formatNumber(value)}💥`;
       if (value < 100) return `${formatNumber(value/10)}💣`;
       return `${formatNumber(value/100)}🧨`;
@@ -95,23 +95,31 @@ function visualToNumber(text, system) {
       for (let [val,name] of punterVisuals) if (name.toLowerCase() === text.toLowerCase()) return val;
       return parseFloat(text);
     case 'michaelchan':
-        // Count emojis if no number is present
-        if (/^[⚡💥💣🧨]+$/.test(text)) {
-            let total = 0;
-            for (let char of text) {
-            if (char === '⚡') total += 0.1*10; // ⚡ = 0.1 -> multiply by 10? keep as 1
-            if (char === '💥') total += 1;
-            if (char === '💣') total += 10;
-            if (char === '🧨') total += 100;
-            }
-            return total;
-        }
+      // Normalize letters to emojis
+      text = text.toLowerCase()
+                .replace(/z/g,'⚡')
+                .replace(/e/g,'💥')
+                .replace(/b/g,'💣')
+                .replace(/d/g,'🧨');
 
-        if (text.endsWith('⚡')) return parseFloat(text.replace('⚡',''))*10;
-        if (text.endsWith('💥')) return parseFloat(text.replace('💥',''));
-        if (text.endsWith('💣')) return parseFloat(text.replace('💣',''))*10;
-        if (text.endsWith('🧨')) return parseFloat(text.replace('🧨',''))*100;
-  return parseFloat(text);
+      // Count emojis if no number is present
+      if (/^[⚡💥💣🧨]+$/.test(text)) {
+        let total = 0;
+        for (let char of text) {
+          if (char === '⚡') total += 0.1;    // ⚡ = 0.1
+          if (char === '💥') total += 1;    // 💥 = 1
+          if (char === '💣') total += 10;   // 💣 = 10
+          if (char === '🧨') total += 100;  // 🧨 = 100
+        }
+        return total;
+      }
+
+      if (text.endsWith('⚡')) return parseFloat(text.replace('⚡',''))*0.1;
+      if (text.endsWith('💥')) return parseFloat(text.replace('💥',''))*1;
+      if (text.endsWith('💣')) return parseFloat(text.replace('💣',''))*10;
+      if (text.endsWith('🧨')) return parseFloat(text.replace('🧨',''))*100;
+      return parseFloat(text);
+
 
     case 'scheep':
       for (let [val,name] of scheepVisuals) if (name.toLowerCase() === text.toLowerCase()) return val;

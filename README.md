@@ -44,7 +44,7 @@ Then, linearly interpolate (150: 14, 6: 3.5)
 ### From Punter
 That same table in reverse.
 ### Visual Representation
-If less than 1, divide value by 10 and add ⚡ emoji.
+If less than 1, multiply value by 10 and add ⚡ emoji.
 If 1-9.99, add 💥 emoji.
 If 10-99, add 💣 and divide by 10.
 If 100+, add 🧨 and divide by 100.

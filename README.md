@@ -13,12 +13,23 @@ Always have .00 decimal precision (or more). Also, names:
 8: Madness
 9: Master
 10: Grandmaster
-11: Grandmaster+
-12: Grandmaster++
+11: Grandmaster+1
+12: Grandmaster+2
 13: TAS
-14: TAS+
-15: TAS++
-16+: 1 more + per +1 increase
+14: TAS+1
+15: TAS+2
+16+: etc
+
+#### Subdifficulties
+These subdifficulties are prefixes for difficulties if the level's decimal representation is lower than the flat .00.
+
+Floor: -0.50 (only used for Easy because no lower difficulty)
+Bottom: -0.40 through -0.50
+Low: -0.25 through -0.40
+Base: -0.25 through 0.25
+High: +0.25 through 0.40
+Peak: +0.40 through 0.50
+Skyline: +0.50 (overrides Floor)
 
 ## MichaelChan system
 ### To Punter

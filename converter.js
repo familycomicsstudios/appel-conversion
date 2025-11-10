@@ -21,8 +21,8 @@ const scheepTable = [
 const punterVisuals = [
   [1, "Easy"], [2, "Medium"], [3, "Hard"], [4, "Harder"], [5, "Insane"],
   [6, "Expert"], [7, "Extreme"], [8, "Madness"], [9, "Master"], [10, "Grandmaster"],
-  [11, "Grandmaster+"], [12, "Grandmaster++"], [13, "TAS"], [14, "TAS+"],
-  [15, "TAS++"]
+  [11, "Grandmaster+1"], [12, "Grandmaster+2"], [13, "TAS"], [14, "TAS+1"],
+  [15, "TAS+2"]
   // For 16+ we add logic dynamically
 ];
 
@@ -38,6 +38,32 @@ const scheepVisuals = [
 function formatNumber(num) {
   return parseFloat(num.toFixed(10)).toString();
 }
+
+function punterPrefix(value) {
+  const base = Math.round(value);
+  let delta = value - base;
+
+  // Floor ONLY applies to Easy (1.x range) — keep original intent:
+  if (value >= 0.49 && value < 0.51) return "Floor ";
+
+  // Compute fractional part relative to the integer floor (0.0 .. <1.0)
+  const frac = value - Math.floor(value);
+
+  // Skyline should trigger only when the fractional part is *very* close to 0.50.
+  // Tight tolerance prevents 1.51 from being treated as Skyline.
+  const SKYLINE_TOLERANCE = 0.005; // ~±0.005 (adjust if you want wider/narrower)
+  if (Math.abs(frac - 0.5) <= SKYLINE_TOLERANCE) return "Skyline ";
+
+  if (delta <= -0.40) return "Bottom ";
+  if (delta <= -0.25) return "Low ";
+  if (delta < 0.25 && delta > -0.25) return "";
+  if (delta >= 0.25 && delta < 0.40) return "High ";
+  if (delta >= 0.40) return "Peak ";
+
+  return "";
+}
+
+
 
 // Linear interpolation to/from punter
 function toPunter(value, table) {
@@ -62,11 +88,13 @@ function fromPunter(value, table) {
 function toVisual(value, system) {
   switch(system) {
     case 'punter':
-      if (value >= 16) return `TAS++${Math.floor(value-15) > 0 ? `+${Math.floor(value-15)}` : ''}`;
-      for (let i = punterVisuals.length-1; i >=0; i--) {
-        if (value >= punterVisuals[i][0]) return punterVisuals[i][1];
+      if (value >= 16) return `TAS${Math.floor(value-13) > 0 ? `+${Math.floor(value-13)}` : ''}`;
+      const prefix = punterPrefix(value); // Add prefix before punterVisuals[i][1] (format: Low Easy, High Medium, etc.)
+      if (value === 0.5) return `Floor Easy`;
+      for (let i = punterVisuals.length-1; i >=0; i--) { // Tier starts after X-0.50, ends at X+0.50
+        if (value > punterVisuals[i][0]-0.5) return `${prefix}${punterVisuals[i][1]}`;
       }
-      return formatNumber(value);
+      return `${formatNumber(value)}`; // no prefix if too low
     case 'michaelchan':
       if (value < 1) return `${formatNumber(value*10)}⚡`;
       if (value < 10) return `${formatNumber(value)}💥`;
@@ -87,10 +115,10 @@ function visualToNumber(text, system) {
   text = text.trim();
   switch(system) {
     case 'punter':
-      // Check + pattern for 16+
-      if (/TAS\+\+/.test(text)) {
-        const extra = parseInt(text.split('+')[2]||0);
-        return 15 + extra;
+      // Turn TAS+2 into 15, TAS+3 into 16, etc.
+      if (/TAS\+\d+/.test(text)) {
+        const extra = parseInt(text.split('+')[1]||0);
+        return 13 + extra;
       }
       for (let [val,name] of punterVisuals) if (name.toLowerCase() === text.toLowerCase()) return val;
       return parseFloat(text);
